@@ -3,120 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSSM Pure Control</title>
+    <title>OSSM Professional Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
-        .card { background: #151515; padding: 20px; border-radius: 20px; width: 100%; max-width: 480px; border: 1px solid #333; box-sizing: border-box; }
-        h1 { font-size: 1.1rem; text-align: center; color: #00ffcc; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        :root { --neon: #00ffcc; --bg: #0a0a0a; --card: #151515; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #e0e0e0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
+        .card { background: var(--card); padding: 20px; border-radius: 20px; width: 100%; max-width: 500px; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        h1 { font-size: 1.2rem; text-align: center; color: var(--neon); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 3px; }
         
-        .section-title { font-size: 0.8rem; color: #555; margin: 15px 0 10px; border-bottom: 1px solid #222; padding-bottom: 5px; text-transform: uppercase; }
-        .control-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
-        .label-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; }
-        .val-display { color: #00ffcc; font-weight: bold; font-family: monospace; }
+        /* Dashboard Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; background: #000; padding: 15px; border-radius: 12px; border: 1px dashed var(--neon); }
+        .stat-box { text-align: center; }
+        .stat-label { font-size: 0.7rem; color: #666; text-transform: uppercase; }
+        .stat-val { font-size: 1.1rem; color: var(--neon); font-family: monospace; font-weight: bold; }
 
+        .section-title { font-size: 0.8rem; color: #555; margin: 20px 0 10px; border-bottom: 1px solid #222; padding-bottom: 5px; text-transform: uppercase; }
+        .control-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        
+        /* Sliders */
         input[type=range] { width: 100%; height: 8px; border-radius: 5px; background: #222; outline: none; -webkit-appearance: none; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #00ffcc; cursor: pointer; border: 2px solid #000; box-shadow: 0 0 8px rgba(0,255,204,0.2); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--neon); cursor: pointer; border: 2px solid #000; }
 
-        .btn-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 5px; }
+        /* Buttons */
+        .btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         button { border-radius: 8px; border: 1px solid #333; padding: 12px 5px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; background: #222; color: #eee; }
-        .btn-active { background: #00ffcc !important; color: #000 !important; border-color: #00ffcc; font-weight: bold; }
+        .btn-active { background: var(--neon) !important; color: #000 !important; font-weight: bold; }
         
-        .main-btn { width: 100%; padding: 15px; font-weight: bold; text-transform: uppercase; margin-top: 10px; border: none; border-radius: 12px; }
-        #connectBtn { background: #00ffcc; color: #000; }
-        #stopBtn { background: #ff3366; color: #fff; }
-        #homingBtn { background: #ffaa00; color: #000; }
-        #status { text-align: center; font-size: 0.75rem; color: #444; margin-bottom: 10px; }
+        .main-btn { width: 100%; padding: 15px; font-weight: bold; text-transform: uppercase; margin-top: 10px; border: none; border-radius: 12px; cursor: pointer; }
+        #connectBtn { background: var(--neon); color: #000; }
+        #stopBtn { background: #ff3366; color: #fff; margin-top: 20px; }
+
+        /* Toggle Switch */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; background: #222; padding: 10px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>OSSM CORE</h1>
-    <div id="status">BAĞLANTI BEKLENİYOR</div>
+    <h1>OSSM DASHBOARD</h1>
+    
+    <div id="status">BAĞLANTI BEKLENİYOR...</div>
     <button id="connectBtn" class="main-btn">CİHAZA BAĞLAN</button>
 
-    <div class="section-title">HAREKET AYARLARI</div>
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-label">HIZ (Realtime)</div>
+            <div id="liveSpeed" class="stat-val">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">KONUM (Pos)</div>
+            <div id="livePos" class="stat-val">0</div>
+        </div>
+    </div>
+
+    <div class="section-title">DONANIM AYARLARI</div>
+    <div class="toggle-row">
+        <span style="font-size: 0.8rem;">Fiziksel Düğme Limiti (Knob)</span>
+        <input type="checkbox" id="knobToggle" onchange="toggleKnob()">
+    </div>
+
+    <div class="section-title">HAREKET KONTROLÜ</div>
     <div class="control-grid">
         <div>
-            <div class="label-row"><span>HIZ (Speed)</span><span id="speedVal" class="val-display">0</span></div>
-            <input type="range" id="speedSlider" min="0" max="100" value="0" step="1">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                <span>HIZ</span><span id="speedVal" style="color:var(--neon)">0</span>
+            </div>
+            <input type="range" id="speedSlider" min="0" max="100" value="0">
         </div>
         <div>
-            <div class="label-row"><span>İNME (Stroke)</span><span id="strokeVal" class="val-display">50</span></div>
-            <input type="range" id="strokeSlider" min="10" max="100" value="50" step="1">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                <span>DERİNLİK (Depth)</span><span id="depthVal" style="color:var(--neon)">0</span>
+            </div>
+            <input type="range" id="depthSlider" min="0" max="100" value="0">
         </div>
     </div>
 
-    <div class="section-title">DERİNLİK & HİSSİYAT</div>
-    <div class="control-grid">
-        <div>
-            <div class="label-row"><span>DERİNLİK (Depth)</span><span id="depthVal" class="val-display">0</span></div>
-            <input type="range" id="depthSlider" min="0" max="100" value="0" step="1">
-        </div>
-        <div>
-            <div class="label-row"><span>YUMUŞAKLIK (Sensation)</span><span id="sensVal" class="val-display">50</span></div>
-            <input type="range" id="sensSlider" min="0" max="100" value="50" step="1">
-        </div>
+    <div class="section-title">DINAMIK PATERNLER</div>
+    <div id="patternGrid" class="btn-group">
+        <span style="font-size: 0.7rem; color: #555;">Cihazdan liste bekleniyor...</span>
     </div>
 
-    <div class="section-title">PATERN (set:pattern)</div>
-    <div class="btn-group">
-        <button class="p-btn btn-active" onclick="sendCmd('set:pattern:0', this)">DÜZ</button>
-        <button class="p-btn" onclick="sendCmd('set:pattern:1', this)">P1</button>
-        <button class="p-btn" onclick="sendCmd('set:pattern:2', this)">P2</button>
-        <button class="p-btn" onclick="sendCmd('set:pattern:3', this)">P3</button>
-        <button class="p-btn" onclick="sendCmd('set:pattern:4', this)">P4</button>
-        <button class="p-btn" onclick="sendCmd('set:pattern:5', this)">P5</button>
-        <button class="p-btn" onclick="sendCmd('set:pattern:6', this)">P6</button>
-    </div>
-
-    <div class="section-title">SİSTEM KOMUTLARI</div>
+    <div class="section-title">SİSTEM</div>
     <div style="display: flex; gap: 8px;">
-        <button id="homingBtn" style="flex: 1;" onclick="sendCmd('go:homing')">HOMING (SIFIRLA)</button>
-        <button style="flex: 1; background: #333;" onclick="sendCmd('go:strokeEngine')">MOTORU AÇ (RESUME)</button>
+        <button onclick="sendRaw('go:homing')" style="flex:1; background:#ffaa00; color:#000;">HOMING</button>
+        <button onclick="sendRaw('go:strokeEngine')" style="flex:1; background:#333;">ENGINE START</button>
     </div>
     
     <button id="stopBtn" class="main-btn" onclick="emergencyStop()">ACİL DURDUR</button>
 </div>
 
 <script>
-    let ossmChar = null;
-    const SERVICE_UUID = "522b443a-4f53-534d-0001-420badbabe69"; 
-    const CHAR_UUID    = "522b443a-4f53-534d-1000-420badbabe69";
+    let chars = {}; // Tüm karakteristikleri burada tutacağız
+    const UUIDS = {
+        SERVICE: "522b443a-4f53-534d-0001-420badbabe69",
+        COMMAND: "522b443a-4f53-534d-0002-420badbabe69",
+        STATE:   "522b443a-4f53-534d-1000-420badbabe69",
+        KNOB:    "522b443a-4f53-534d-0010-420badbabe69",
+        PATTERNS:"522b443a-4f53-534d-2000-420badbabe69"
+    };
 
-    const connectBtn = document.getElementById('connectBtn');
-    const statusEl = document.getElementById('status');
-
-    connectBtn.onclick = async () => {
+    document.getElementById('connectBtn').onclick = async () => {
         try {
             const device = await navigator.bluetooth.requestDevice({
                 filters: [{ namePrefix: 'OSSM' }],
-                optionalServices: [SERVICE_UUID]
+                optionalServices: [UUIDS.SERVICE]
             });
             const server = await device.gatt.connect();
-            const service = await server.getPrimaryService(SERVICE_UUID);
-            ossmChar = await service.getCharacteristic(CHAR_UUID);
-            
-            statusEl.innerText = "BAĞLANDI ✅";
-            statusEl.style.color = "#00ffcc";
-            connectBtn.style.display = "none";
+            const service = await server.getPrimaryService(UUIDS.SERVICE);
 
-            // Başlangıç durumu
-            sendCmd("go:manual");
-        } catch (e) { statusEl.innerText = "Hata: " + e.message; }
+            // Tüm kanalları al
+            chars.command = await service.getCharacteristic(UUIDS.COMMAND);
+            chars.state   = await service.getCharacteristic(UUIDS.STATE);
+            chars.knob    = await service.getCharacteristic(UUIDS.KNOB);
+            chars.patterns= await service.getCharacteristic(UUIDS.PATTERNS);
+
+            // Canlı Veri Dinleme (Notification)
+            await chars.state.startNotifications();
+            chars.state.addEventListener('characteristicvaluechanged', handleStateUpdate);
+
+            // Paternleri Cihazdan Oku
+            loadPatterns();
+
+            document.getElementById('status').innerText = "BAĞLANDI ✅";
+            document.getElementById('connectBtn').style.display = "none";
+        } catch (e) { alert("Hata: " + e.message); }
     };
 
-    async function sendCmd(cmd, btn = null) {
-        if (!ossmChar) return;
+    function handleStateUpdate(event) {
+        const data = new TextDecoder().decode(event.target.value);
         try {
-            await ossmChar.writeValue(new TextEncoder().encode(cmd));
-            console.log(">>", cmd);
-            
-            if (btn && btn.classList.contains('p-btn')) {
-                document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('btn-active'));
+            const state = JSON.parse(data);
+            document.getElementById('liveSpeed').innerText = state.speed || 0;
+            document.getElementById('livePos').innerText = state.position || 0;
+        } catch(e) {}
+    }
+
+    async function loadPatterns() {
+        const val = await chars.patterns.readValue();
+        const patternList = JSON.parse(new TextDecoder().decode(val));
+        const grid = document.getElementById('patternGrid');
+        grid.innerHTML = ""; // Temizle
+        
+        patternList.forEach((p, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = p;
+            btn.onclick = () => {
+                sendRaw(`set:pattern:${index}`);
+                document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('btn-active'));
                 btn.classList.add('btn-active');
-            }
-        } catch (err) { console.error("BLE Error:", err); }
+            };
+            grid.appendChild(btn);
+        });
+    }
+
+    async function toggleKnob() {
+        const isEnabled = document.getElementById('knobToggle').checked;
+        const msg = isEnabled ? "true" : "false";
+        await chars.knob.writeValue(new TextEncoder().encode(msg));
+    }
+
+    async function sendRaw(cmd) {
+        if (chars.command) {
+            await chars.command.writeValue(new TextEncoder().encode(cmd));
+        }
     }
 
     function setupSlider(id, valId, prefix) {
@@ -124,21 +172,18 @@
         const v = document.getElementById(valId);
         s.oninput = () => {
             v.innerText = s.value;
-            sendCmd(`${prefix}:${s.value}`);
+            sendRaw(`${prefix}:${s.value}`);
         };
     }
 
-    // Adımları 1'e çektim (Dökümandaki 0-100 tam hassasiyet için)
     setupSlider('speedSlider', 'speedVal', 'set:speed');
-    setupSlider('strokeSlider', 'strokeVal', 'set:stroke');
     setupSlider('depthSlider', 'depthVal', 'set:depth');
-    setupSlider('sensSlider', 'sensVal', 'set:sensation');
 
     function emergencyStop() {
+        sendRaw("set:speed:0");
+        sendRaw("go:manual");
         document.getElementById('speedSlider').value = 0;
         document.getElementById('speedVal').innerText = "0";
-        sendCmd("set:speed:0");
-        sendCmd("go:manual");
     }
 </script>
 </body>
