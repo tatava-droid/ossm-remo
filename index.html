@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSSM Professional Dashboard</title>
+    <title>OSSM Ultimate Dashboard</title>
     <style>
         :root { --neon: #00ffcc; --bg: #0a0a0a; --card: #151515; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #e0e0e0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
-        .card { background: var(--card); padding: 20px; border-radius: 20px; width: 100%; max-width: 500px; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .card { background: var(--card); padding: 20px; border-radius: 20px; width: 100%; max-width: 500px; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.5); box-sizing: border-box; }
         h1 { font-size: 1.2rem; text-align: center; color: var(--neon); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 3px; }
         
         /* Dashboard Stats */
@@ -20,6 +20,8 @@
         .control-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         
         /* Sliders */
+        .slider-row { margin-bottom: 15px; }
+        .label-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px; }
         input[type=range] { width: 100%; height: 8px; border-radius: 5px; background: #222; outline: none; -webkit-appearance: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--neon); cursor: pointer; border: 2px solid #000; }
 
@@ -32,7 +34,6 @@
         #connectBtn { background: var(--neon); color: #000; }
         #stopBtn { background: #ff3366; color: #fff; margin-top: 20px; }
 
-        /* Toggle Switch */
         .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; background: #222; padding: 10px; border-radius: 8px; }
     </style>
 </head>
@@ -41,7 +42,7 @@
 <div class="card">
     <h1>OSSM DASHBOARD</h1>
     
-    <div id="status">BAĞLANTI BEKLENİYOR...</div>
+    <div id="status" style="text-align:center; font-size:0.7rem; color:#444; margin-bottom:10px;">BAĞLANTI BEKLENİYOR...</div>
     <button id="connectBtn" class="main-btn">CİHAZA BAĞLAN</button>
 
     <div class="stats-grid">
@@ -55,29 +56,37 @@
         </div>
     </div>
 
-    <div class="section-title">DONANIM AYARLARI</div>
-    <div class="toggle-row">
-        <span style="font-size: 0.8rem;">Fiziksel Düğme Limiti (Knob)</span>
-        <input type="checkbox" id="knobToggle" onchange="toggleKnob()">
-    </div>
-
-    <div class="section-title">HAREKET KONTROLÜ</div>
+    <div class="section-title">ANA HAREKET</div>
     <div class="control-grid">
-        <div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
-                <span>HIZ</span><span id="speedVal" style="color:var(--neon)">0</span>
-            </div>
+        <div class="slider-row">
+            <div class="label-row"><span>HIZ (Speed)</span><span id="speedVal" class="stat-val">0</span></div>
             <input type="range" id="speedSlider" min="0" max="100" value="0">
         </div>
-        <div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
-                <span>DERİNLİK (Depth)</span><span id="depthVal" style="color:var(--neon)">0</span>
-            </div>
+        <div class="slider-row">
+            <div class="label-row"><span>DERİNLİK (Depth)</span><span id="depthVal" class="stat-val">0</span></div>
             <input type="range" id="depthSlider" min="0" max="100" value="0">
         </div>
     </div>
 
-    <div class="section-title">DINAMIK PATERNLER</div>
+    <div class="section-title">HASSAS AYARLAR</div>
+    <div class="control-grid">
+        <div class="slider-row">
+            <div class="label-row"><span>İNME (Stroke)</span><span id="strokeVal" class="stat-val">50</span></div>
+            <input type="range" id="strokeSlider" min="10" max="100" value="50">
+        </div>
+        <div class="slider-row">
+            <div class="label-row"><span>YUMUŞAKLIK (Sensation)</span><span id="sensVal" class="stat-val">50</span></div>
+            <input type="range" id="sensSlider" min="0" max="100" value="50">
+        </div>
+    </div>
+
+    <div class="section-title">GÜVENLİK</div>
+    <div class="toggle-row">
+        <span style="font-size: 0.8rem;">Fiziksel Düğmeyi Limit Yap (Knob)</span>
+        <input type="checkbox" id="knobToggle" onchange="toggleKnob()">
+    </div>
+
+    <div class="section-title">DİNAMİK PATERNLER</div>
     <div id="patternGrid" class="btn-group">
         <span style="font-size: 0.7rem; color: #555;">Cihazdan liste bekleniyor...</span>
     </div>
@@ -92,7 +101,7 @@
 </div>
 
 <script>
-    let chars = {}; // Tüm karakteristikleri burada tutacağız
+    let chars = {};
     const UUIDS = {
         SERVICE: "522b443a-4f53-534d-0001-420badbabe69",
         COMMAND: "522b443a-4f53-534d-0002-420badbabe69",
@@ -110,60 +119,60 @@
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService(UUIDS.SERVICE);
 
-            // Tüm kanalları al
             chars.command = await service.getCharacteristic(UUIDS.COMMAND);
             chars.state   = await service.getCharacteristic(UUIDS.STATE);
             chars.knob    = await service.getCharacteristic(UUIDS.KNOB);
             chars.patterns= await service.getCharacteristic(UUIDS.PATTERNS);
 
-            // Canlı Veri Dinleme (Notification)
             await chars.state.startNotifications();
             chars.state.addEventListener('characteristicvaluechanged', handleStateUpdate);
 
-            // Paternleri Cihazdan Oku
             loadPatterns();
 
             document.getElementById('status').innerText = "BAĞLANDI ✅";
             document.getElementById('connectBtn').style.display = "none";
-        } catch (e) { alert("Hata: " + e.message); }
+        } catch (e) { console.log(e); }
     };
 
     function handleStateUpdate(event) {
         const data = new TextDecoder().decode(event.target.value);
         try {
             const state = JSON.parse(data);
-            document.getElementById('liveSpeed').innerText = state.speed || 0;
-            document.getElementById('livePos').innerText = state.position || 0;
+            if(state.speed !== undefined) document.getElementById('liveSpeed').innerText = state.speed;
+            if(state.position !== undefined) document.getElementById('livePos').innerText = state.position;
         } catch(e) {}
     }
 
     async function loadPatterns() {
-        const val = await chars.patterns.readValue();
-        const patternList = JSON.parse(new TextDecoder().decode(val));
-        const grid = document.getElementById('patternGrid');
-        grid.innerHTML = ""; // Temizle
-        
-        patternList.forEach((p, index) => {
-            const btn = document.createElement('button');
-            btn.innerText = p;
-            btn.onclick = () => {
-                sendRaw(`set:pattern:${index}`);
-                document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('btn-active'));
-                btn.classList.add('btn-active');
-            };
-            grid.appendChild(btn);
-        });
+        try {
+            const val = await chars.patterns.readValue();
+            const patternList = JSON.parse(new TextDecoder().decode(val));
+            const grid = document.getElementById('patternGrid');
+            grid.innerHTML = "";
+            
+            patternList.forEach((p, index) => {
+                const btn = document.createElement('button');
+                btn.innerText = p;
+                btn.onclick = () => {
+                    sendRaw(`set:pattern:${index}`);
+                    document.querySelectorAll('#patternGrid button').forEach(b => b.classList.remove('btn-active'));
+                    btn.classList.add('btn-active');
+                };
+                grid.appendChild(btn);
+            });
+        } catch(e) { console.log("Pattern error", e); }
     }
 
     async function toggleKnob() {
         const isEnabled = document.getElementById('knobToggle').checked;
         const msg = isEnabled ? "true" : "false";
-        await chars.knob.writeValue(new TextEncoder().encode(msg));
+        if(chars.knob) await chars.knob.writeValue(new TextEncoder().encode(msg));
     }
 
     async function sendRaw(cmd) {
         if (chars.command) {
             await chars.command.writeValue(new TextEncoder().encode(cmd));
+            console.log("Sent:", cmd);
         }
     }
 
@@ -178,6 +187,8 @@
 
     setupSlider('speedSlider', 'speedVal', 'set:speed');
     setupSlider('depthSlider', 'depthVal', 'set:depth');
+    setupSlider('strokeSlider', 'strokeVal', 'set:stroke');
+    setupSlider('sensSlider', 'sensVal', 'set:sensation');
 
     function emergencyStop() {
         sendRaw("set:speed:0");
