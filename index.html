@@ -2,60 +2,71 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>OSSM Pro - Solid Edition</title>
+    <title>OSSM Pro - Official Patterns</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         :root { --neon: #00ffcc; --bg: #0a0a0a; }
-        body { font-family: sans-serif; background: var(--bg); color: white; text-align: center; padding: 15px; }
-        .card { background: #161616; padding: 20px; border-radius: 20px; border: 1px solid #333; max-width: 400px; margin: auto; }
-        .btn { background: var(--neon); color: black; padding: 15px; border-radius: 12px; border: none; font-weight: bold; width: 100%; cursor: pointer; }
-        .section-title { font-size: 0.7rem; color: #666; text-transform: uppercase; margin: 15px 0 5px; text-align: left; border-bottom: 1px solid #222; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; text-align: center; padding: 15px; margin: 0; }
+        .card { background: #161616; padding: 20px; border-radius: 20px; border: 1px solid #333; max-width: 480px; margin: 10px auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: var(--neon); text-transform: uppercase; font-size: 1.1rem; letter-spacing: 2px; margin-bottom: 20px; }
         
-        /* Patern Butonları */
-        .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .p-btn { background: #222; color: white; border: 1px solid #444; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
-        .active-p { background: var(--neon) !important; color: black !important; font-weight: bold; }
+        .btn { background: var(--neon); color: black; padding: 15px; border-radius: 12px; border: none; font-weight: bold; width: 100%; cursor: pointer; margin: 5px 0; font-size: 1rem; }
+        .btn-stop { background: #ff3366; color: white; margin-top: 15px; }
+        
+        /* Patern Listesi */
+        .p-list { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
+        .p-btn { background: #222; color: #eee; padding: 12px; border-radius: 10px; border: 1px solid #444; font-size: 0.85rem; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .p-btn span { color: #666; font-size: 0.7rem; }
+        .p-btn:hover { border-color: var(--neon); }
+        .active-p { background: var(--neon) !important; color: black !important; border-color: var(--neon); font-weight: bold; }
+        .active-p span { color: rgba(0,0,0,0.5); }
 
-        .slider-box { background: #222; padding: 10px; border-radius: 10px; margin: 10px 0; }
-        .label-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; }
-        input[type=range] { width: 100%; accent-color: var(--neon); }
-        .stop { background: #ff3366; color: white; margin-top: 15px; }
+        .slider-box { background: #222; padding: 12px; border-radius: 12px; margin: 10px 0; border: 1px solid #2a2a2a; }
+        .label-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; font-weight: bold; }
+        .val { color: var(--neon); font-family: monospace; }
+        input[type=range] { width: 100%; height: 8px; accent-color: var(--neon); cursor: pointer; }
+        .section-title { font-size: 0.7rem; color: #666; text-transform: uppercase; margin-top: 20px; border-bottom: 1px solid #222; padding-bottom: 5px; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="color:var(--neon)">OSSM CONTROL</h2>
+    <h2>OSSM COMMANDER</h2>
     <button id="connectBtn" class="btn">CİHAZA BAĞLAN</button>
     
     <div id="controls" style="display:none;">
-        <button onclick="send('go:strokeEngine')" class="btn" style="background:#ffaa00; margin-bottom:10px;">ENGINE START</button>
+        <button onclick="send('go:strokeEngine')" class="btn" style="background:#ffaa00">ENGINE START</button>
 
-        <div class="section-title">HAZIR PATERNLER</div>
-        <div class="p-grid">
-            <button class="p-btn active-p" id="p0" onclick="changePattern(0)">MANUEL (Constant)</button>
-            <button class="p-btn" id="p1" onclick="changePattern(1)">SINE (Luna)</button>
-            <button class="p-btn" id="p2" onclick="changePattern(2)">SAW (Pulse)</button>
-            <button class="p-btn" id="p3" onclick="changePattern(3)">TRIANGLE</button>
-            <button class="p-btn" id="p4" onclick="changePattern(4)">SQUARE</button>
-            <button class="p-btn" id="p5" onclick="changePattern(5)">RANDOM</button>
+        <div class="section-title">Motion Patterns</div>
+        <div class="p-list">
+            <button class="p-btn active-p" id="p0" onclick="changePattern(0)">Simple Stroke <span>(0)</span></button>
+            <button class="p-btn" id="p1" onclick="changePattern(1)">Teasing Pounding <span>(1)</span></button>
+            <button class="p-btn" id="p2" onclick="changePattern(2)">Robo Stroke <span>(2)</span></button>
+            <button class="p-btn" id="p3" onclick="changePattern(3)">Half'n'Half <span>(3)</span></button>
+            <button class="p-btn" id="p4" onclick="changePattern(4)">Deeper <span>(4)</span></button>
+            <button class="p-btn" id="p5" onclick="changePattern(5)">Stop'n'Go <span>(5)</span></button>
+            <button class="p-btn" id="p6" onclick="changePattern(6)">Insist <span>(6)</span></button>
         </div>
 
-        <div class="section-title">ANA AYARLAR</div>
+        <div class="section-title">Live Controls</div>
         <div class="slider-box">
-            <div class="label-row"><span>HIZ</span><span id="v1">0</span></div>
+            <div class="label-row"><span>SPEED</span><span id="v1" class="val">0</span></div>
             <input type="range" id="s1" min="0" max="100" value="0">
         </div>
         <div class="slider-box">
-            <div class="label-row"><span>DERİNLİK</span><span id="v2">50</span></div>
+            <div class="label-row"><span>STROKE</span><span id="v3" class="val">50</span></div>
+            <input type="range" id="s3" min="10" max="100" value="50">
+        </div>
+        <div class="slider-box">
+            <div class="label-row"><span>DEPTH</span><span id="v2" class="val">50</span></div>
             <input type="range" id="s2" min="0" max="100" value="50">
         </div>
         <div class="slider-box">
-            <div class="label-row"><span>STROKE</span><span id="v3">50</span></div>
-            <input type="range" id="s3" min="10" max="100" value="50">
+            <div class="label-row"><span>SENSATION</span><span id="v4" class="val">50</span></div>
+            <input type="range" id="s4" min="0" max="100" value="50">
         </div>
 
-        <button onclick="stop()" class="btn stop">DURDUR (STOP)</button>
+        <button onclick="stop()" class="btn btn-stop">EMERGENCY STOP</button>
     </div>
 </div>
 
@@ -82,16 +93,12 @@
         if (!ossmChar) return;
         try {
             await ossmChar.writeValue(new TextEncoder().encode(cmd));
-            console.log("Gönderildi:", cmd);
-        } catch (e) { console.error("Hata:", e); }
+        } catch (e) { console.error("BLE Error:", e); }
     }
 
     function changePattern(idx) {
-        // Buton renklerini güncelle
         document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('active-p'));
         document.getElementById('p' + idx).classList.add('active-p');
-        
-        // Önce hızı ve stroku tazele (paternlerin çalışması için)
         send(`set:pattern:${idx}`);
     }
 
@@ -107,10 +114,13 @@
     setup('s1', 'v1', 'set:speed');
     setup('s2', 'v2', 'set:depth');
     setup('s3', 'v3', 'set:stroke');
+    setup('s4', 'v4', 'set:sensation');
 
     function stop() {
         send("set:speed:0");
         send("go:manual");
+        document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('active-p'));
+        document.getElementById('p0').classList.add('active-p');
     }
 </script>
 </body>
