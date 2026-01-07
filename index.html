@@ -1,99 +1,96 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSSM - 1000 Channel</title>
+    <title>OSSM Simple Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: sans-serif; background: #0a0a0a; color: #00ffcc; text-align: center; padding: 20px; }
-        .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; max-width: 400px; margin: auto; }
-        #status { font-size: 0.8rem; color: #888; margin: 15px 0; min-height: 40px; }
-        button { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: #333; color: white; }
-        .conn-btn { background: #00ffcc; color: #000; font-size: 1rem; }
-        .stop-btn { background: #ff3366; }
-        input[type=range] { width: 100%; margin: 20px 0; accent-color: #00ffcc; }
+        body { font-family: sans-serif; background: #111; color: white; text-align: center; padding: 20px; }
+        .btn { background: #00ffcc; color: black; padding: 20px; border-radius: 10px; border: none; font-weight: bold; width: 100%; font-size: 1.2rem; }
+        .slider-box { margin: 30px 0; background: #222; padding: 15px; border-radius: 10px; }
+        input[type=range] { width: 100%; height: 15px; }
+        .stop { background: #ff3366; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>OSSM CORE (1000)</h2>
-    <div id="status">Bluetooth bekleniyor...</div>
-    <button id="connectBtn" class="conn-btn">CİHAZ TARAMASINI BAŞLAT</button>
+    <h1>OSSM CONTROL</h1>
+    <button id="connectBtn" class="btn">BAĞLAN</button>
+    <div id="status" style="margin: 10px; color: #888;">Cihaz bekleniyor...</div>
 
     <div id="controls" style="display:none;">
-        <p>HIZ: <span id="sVal">0</span></p>
-        <input type="range" id="sSlider" min="0" max="100" value="0">
-        
-        <p>DERİNLİK: <span id="dVal">0</span></p>
-        <input type="range" id="dSlider" min="0" max="100" value="0">
+        <div class="slider-box">
+            HIZ: <span id="v1">0</span>
+            <input type="range" id="s1" min="0" max="100" value="0">
+        </div>
 
-        <button onclick="send('go:strokeEngine')">MOTORU AÇ (ENGINE)</button>
-        <button onclick="send('go:homing')">SIFIRLA (HOMING)</button>
-        <button onclick="emergencyStop()" class="stop-btn">ACİL DURDUR</button>
+        <div class="slider-box">
+            DERİNLİK: <span id="v2">0</span>
+            <input type="range" id="s2" min="0" max="100" value="0">
+        </div>
+
+        <div class="slider-box">
+            İNME (Stroke): <span id="v3">50</span>
+            <input type="range" id="s3" min="10" max="100" value="50">
+        </div>
+
+        <div class="slider-box">
+            YUMUŞAKLIK (Sens): <span id="v4">50</span>
+            <input type="range" id="s4" min="0" max="100" value="50">
+        </div>
+
+        <button onclick="send('go:homing')" style="background:#444; color:white; padding:10px; width:100%; border-radius:5px; margin-bottom:5px;">SIFIRLA (HOMING)</button>
+        <button onclick="send('go:strokeEngine')" style="background:#444; color:white; padding:10px; width:100%; border-radius:5px;">BAŞLAT (START)</button>
+        <button onclick="stop()" class="btn stop">DURDUR (STOP)</button>
     </div>
-</div>
 
 <script>
-    let mainChar = null;
+    let ossmChar = null;
     const SERVICE_UUID = "522b443a-4f53-534d-0001-420badbabe69";
-    const CHAR_UUID    = "522b443a-4f53-534d-1000-420badbabe69"; // Konuştuğumuz 1000 kanalı
-
-    const statusEl = document.getElementById('status');
+    const CHAR_UUID = "522b443a-4f53-534d-1000-420badbabe69"; // nRF'de gördüğümüz çalışan kanal
 
     document.getElementById('connectBtn').onclick = async () => {
         try {
-            statusEl.innerText = "Bağlanıyor...";
-            
-            // Filtreyi gevşettik: Tüm cihazları gösterir
             const device = await navigator.bluetooth.requestDevice({
-                acceptAllDevices: true, 
+                filters: [{ namePrefix: 'OSSM' }],
                 optionalServices: [SERVICE_UUID]
             });
-
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService(SERVICE_UUID);
-            mainChar = await service.getCharacteristic(CHAR_UUID);
+            ossmChar = await service.getCharacteristic(CHAR_UUID);
 
-            // Veri bildirimlerini (Notify) dinle
-            try {
-                await mainChar.startNotifications();
-                mainChar.addEventListener('characteristicvaluechanged', (e) => {
-                    console.log("Cihazdan gelen:", new TextDecoder().decode(e.target.value));
-                });
-            } catch(nErr) { console.log("Bildirim desteği yok."); }
-
-            statusEl.innerText = "BAĞLANDI: " + device.name;
-            statusEl.style.color = "#00ffcc";
+            document.getElementById('status').innerText = "BAĞLANDI ✅";
             document.getElementById('controls').style.display = "block";
             document.getElementById('connectBtn').style.display = "none";
-
         } catch (e) {
-            statusEl.innerText = "Hata: " + e.message;
-            console.error(e);
+            alert("Bağlantı Hatası: " + e.message);
         }
     };
 
     async function send(cmd) {
-        if (!mainChar) return;
-        try {
-            await mainChar.writeValue(new TextEncoder().encode(cmd));
-        } catch (e) { statusEl.innerText = "Gönderilemedi!"; }
+        if (!ossmChar) return;
+        await ossmChar.writeValue(new TextEncoder().encode(cmd));
     }
 
-    document.getElementById('sSlider').oninput = (e) => {
-        document.getElementById('sVal').innerText = e.target.value;
-        send(`set:speed:${e.target.value}`);
-    };
+    function setup(id, valId, cmd) {
+        const s = document.getElementById(id);
+        const v = document.getElementById(valId);
+        s.oninput = () => {
+            v.innerText = s.value;
+            send(cmd + ":" + s.value);
+        };
+    }
 
-    document.getElementById('dSlider').oninput = (e) => {
-        document.getElementById('dVal').innerText = e.target.value;
-        send(`set:depth:${e.target.value}`);
-    };
+    setup('s1', 'v1', 'set:speed');
+    setup('s2', 'v2', 'set:depth');
+    setup('s3', 'v3', 'set:stroke');
+    setup('s4', 'v4', 'set:sensation');
 
-    function emergencyStop() {
+    function stop() {
         send("set:speed:0");
         send("go:manual");
+        document.getElementById('s1').value = 0;
+        document.getElementById('v1').innerText = "0";
     }
 </script>
 </body>
