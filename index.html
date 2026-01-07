@@ -3,115 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OSSM - Hybrid Mode</title>
+    <title>OSSM - 1000 Channel</title>
     <style>
-        :root { --neon: #00ffcc; --bg: #0a0a0a; --card: #151515; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #e0e0e0; display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; }
-        .card { background: var(--card); padding: 20px; border-radius: 20px; width: 100%; max-width: 480px; border: 1px solid #333; box-sizing: border-box; }
-        h1 { font-size: 1.2rem; text-align: center; color: var(--neon); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
-        #status { text-align: center; font-size: 0.8rem; padding: 10px; border-radius: 8px; background: #222; margin-bottom: 15px; color: #aaa; border: 1px solid #444; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; background: #000; padding: 15px; border-radius: 12px; border: 1px solid var(--neon); }
-        .stat-box { text-align: center; }
-        .stat-val { font-size: 1.2rem; color: var(--neon); font-family: monospace; font-weight: bold; }
-        .label { font-size: 0.7rem; color: #666; margin-bottom: 5px; text-transform: uppercase; }
-        input[type=range] { width: 100%; height: 8px; border-radius: 5px; background: #222; outline: none; -webkit-appearance: none; margin: 15px 0; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--neon); cursor: pointer; border: 2px solid #000; }
-        button { border-radius: 10px; border: 1px solid #333; padding: 12px; font-size: 0.8rem; cursor: pointer; background: #222; color: #eee; width: 100%; margin-bottom: 8px; font-weight: bold; transition: 0.3s; }
-        button:active { transform: scale(0.98); }
-        .main-btn { background: var(--neon); color: #000; border: none; font-size: 1rem; }
+        body { font-family: sans-serif; background: #0a0a0a; color: #00ffcc; text-align: center; padding: 20px; }
+        .card { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; max-width: 400px; margin: auto; }
+        #status { font-size: 0.8rem; color: #888; margin: 15px 0; min-height: 40px; }
+        button { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: #333; color: white; }
+        .conn-btn { background: #00ffcc; color: #000; font-size: 1rem; }
+        .stop-btn { background: #ff3366; }
+        input[type=range] { width: 100%; margin: 20px 0; accent-color: #00ffcc; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>OSSM CORE</h1>
-    <div id="status">BAĞLANMAYA HAZIR</div>
-    <button id="connectBtn" class="main-btn">CİHAZA BAĞLAN</button>
+    <h2>OSSM CORE (1000)</h2>
+    <div id="status">Bluetooth bekleniyor...</div>
+    <button id="connectBtn" class="conn-btn">CİHAZ TARAMASINI BAŞLAT</button>
 
-    <div class="stats-grid">
-        <div class="stat-box"><div class="label">HIZ</div><div id="liveSpeed" class="stat-val">0</div></div>
-        <div class="stat-box"><div class="label">POZİSYON</div><div id="livePos" class="stat-val">0</div></div>
-    </div>
+    <div id="controls" style="display:none;">
+        <p>HIZ: <span id="sVal">0</span></p>
+        <input type="range" id="sSlider" min="0" max="100" value="0">
+        
+        <p>DERİNLİK: <span id="dVal">0</span></p>
+        <input type="range" id="dSlider" min="0" max="100" value="0">
 
-    <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-        <span>HIZ AYARI</span><span id="speedVal" style="color:var(--neon)">0</span>
-    </div>
-    <input type="range" id="speedSlider" min="0" max="100" value="0">
-
-    <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-        <span>DERİNLİK</span><span id="depthVal" style="color:var(--neon)">0</span>
-    </div>
-    <input type="range" id="depthSlider" min="0" max="100" value="0">
-
-    <div style="margin-top:10px;">
-        <button onclick="sendRaw('go:homing')" style="background:#ffaa00; color:#000;">SIFIRLA (HOMING)</button>
-        <button onclick="sendRaw('go:strokeEngine')">BAŞLAT (ENGINE START)</button>
-        <button onclick="emergencyStop()" style="background:#ff3366; color:#fff;">DURDUR (STOP)</button>
+        <button onclick="send('go:strokeEngine')">MOTORU AÇ (ENGINE)</button>
+        <button onclick="send('go:homing')">SIFIRLA (HOMING)</button>
+        <button onclick="emergencyStop()" class="stop-btn">ACİL DURDUR</button>
     </div>
 </div>
 
 <script>
-    let ossmChar = null; // Tek kanal üzerinden yöneteceğiz
+    let mainChar = null;
     const SERVICE_UUID = "522b443a-4f53-534d-0001-420badbabe69";
-    const COMMON_CHAR  = "522b443a-4f53-534d-1000-420badbabe69"; // Hem yazma hem okuma için
+    const CHAR_UUID    = "522b443a-4f53-534d-1000-420badbabe69"; // Konuştuğumuz 1000 kanalı
 
     const statusEl = document.getElementById('status');
 
     document.getElementById('connectBtn').onclick = async () => {
         try {
+            statusEl.innerText = "Bağlanıyor...";
+            
+            // Filtreyi gevşettik: Tüm cihazları gösterir
             const device = await navigator.bluetooth.requestDevice({
-                filters: [{ namePrefix: 'OSSM' }],
+                acceptAllDevices: true, 
                 optionalServices: [SERVICE_UUID]
             });
-            
-            statusEl.innerText = "GATT Bağlanıyor...";
+
             const server = await device.gatt.connect();
             const service = await server.getPrimaryService(SERVICE_UUID);
+            mainChar = await service.getCharacteristic(CHAR_UUID);
 
-            statusEl.innerText = "Kanal Ayarlanıyor...";
-            ossmChar = await service.getCharacteristic(COMMON_CHAR);
+            // Veri bildirimlerini (Notify) dinle
+            try {
+                await mainChar.startNotifications();
+                mainChar.addEventListener('characteristicvaluechanged', (e) => {
+                    console.log("Cihazdan gelen:", new TextDecoder().decode(e.target.value));
+                });
+            } catch(nErr) { console.log("Bildirim desteği yok."); }
 
-            // Veri Dinlemeyi Başlat (Notifications)
-            await ossmChar.startNotifications();
-            ossmChar.addEventListener('characteristicvaluechanged', (e) => {
-                try {
-                    const data = new TextDecoder().decode(e.target.value);
-                    const state = JSON.parse(data);
-                    if(state.speed !== undefined) document.getElementById('liveSpeed').innerText = state.speed;
-                    if(state.position !== undefined) document.getElementById('livePos').innerText = state.position;
-                } catch(err) { /* JSON olmayan mesajlar olabilir */ }
-            });
-
-            statusEl.innerText = "BAĞLANDI ✅";
+            statusEl.innerText = "BAĞLANDI: " + device.name;
             statusEl.style.color = "#00ffcc";
+            document.getElementById('controls').style.display = "block";
             document.getElementById('connectBtn').style.display = "none";
 
         } catch (e) {
-            statusEl.innerText = "Bağlantı Hatası: " + e.message;
-            statusEl.style.color = "#ff3366";
+            statusEl.innerText = "Hata: " + e.message;
+            console.error(e);
         }
     };
 
-    async function sendRaw(cmd) {
-        if (!ossmChar) return;
+    async function send(cmd) {
+        if (!mainChar) return;
         try {
-            await ossmChar.writeValue(new TextEncoder().encode(cmd));
-        } catch (e) { console.error("Send Error:", e); }
+            await mainChar.writeValue(new TextEncoder().encode(cmd));
+        } catch (e) { statusEl.innerText = "Gönderilemedi!"; }
     }
 
-    document.getElementById('speedSlider').oninput = (e) => {
-        document.getElementById('speedVal').innerText = e.target.value;
-        sendRaw(`set:speed:${e.target.value}`);
+    document.getElementById('sSlider').oninput = (e) => {
+        document.getElementById('sVal').innerText = e.target.value;
+        send(`set:speed:${e.target.value}`);
     };
 
-    document.getElementById('depthSlider').oninput = (e) => {
-        document.getElementById('depthVal').innerText = e.target.value;
-        sendRaw(`set:depth:${e.target.value}`);
+    document.getElementById('dSlider').oninput = (e) => {
+        document.getElementById('dVal').innerText = e.target.value;
+        send(`set:depth:${e.target.value}`);
     };
 
     function emergencyStop() {
-        sendRaw("set:speed:0");
-        sendRaw("go:manual");
+        send("set:speed:0");
+        send("go:manual");
     }
 </script>
 </body>
